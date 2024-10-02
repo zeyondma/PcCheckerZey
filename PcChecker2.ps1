@@ -24,9 +24,7 @@ foreach ($char in $art.ToCharArray()) {
 }
 
 function Get-OneDrivePath {
-    # Function implementation unchanged...
     try {
-        $oneDrivePath = (Get-ItemProperty "HKCU:\Software\Microsoft\OneDrive" -Name "UserFolder").UserFolder
         if (-not $oneDrivePath) {
             Write-Warning "OneDrive path not found in registry. Attempting alternative detection..."
             $envOneDrive = [System.IO.Path]::Combine($env:UserProfile, "OneDrive")
@@ -50,7 +48,6 @@ function Format-Output {
 }
 
 function Log-FolderNames {
-    # Function implementation unchanged...
     $userName = $env:UserName
     $oneDrivePath = Get-OneDrivePath
     $potentialPaths = @("C:\Users\$userName\Documents\My Games\Rainbow Six - Siege", "$oneDrivePath\Documents\My Games\Rainbow Six - Siege")
@@ -73,7 +70,6 @@ function Log-FolderNames {
 }
 
 function Find-RarAndExeFiles {
-    # Function implementation unchanged...
     Write-Output "Finding .rar and .exe files..."
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
@@ -88,7 +84,7 @@ function Find-RarAndExeFiles {
     $jobs = @()
 
     $rarJob = {
-        param ($searchPaths, $outputFile, $oneDriveFiles)
+        param ($searchPaths, $oneDriveFiles)
         $allFiles = @()
         foreach ($path in $searchPaths) {
             Get-ChildItem -Path $path -Recurse -Filter "*.rar" -ErrorAction SilentlyContinue | ForEach-Object {
@@ -100,7 +96,7 @@ function Find-RarAndExeFiles {
     }
 
     $exeJob = {
-        param ($oneDrivePath, $outputFile, $oneDriveFiles)
+        param ($oneDrivePath, $oneDriveFiles)
         $exeFiles = @()
         if ($oneDrivePath) {
             Get-ChildItem -Path $oneDrivePath -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
@@ -111,8 +107,8 @@ function Find-RarAndExeFiles {
         return $exeFiles
     }
 
-    $jobs += Start-Job -ScriptBlock $rarJob -ArgumentList $rarSearchPaths, $outputFile, $oneDriveFiles
-    $jobs += Start-Job -ScriptBlock $exeJob -ArgumentList $oneDrivePath, $outputFile, $oneDriveFiles
+    $jobs += Start-Job -ScriptBlock $rarJob -ArgumentList $rarSearchPaths, $oneDriveFiles
+    $jobs += Start-Job -ScriptBlock $exeJob -ArgumentList $oneDrivePath, $oneDriveFiles
 
     $jobs | ForEach-Object {
         Wait-Job $_ | Out-Null
@@ -133,8 +129,7 @@ function Find-RarAndExeFiles {
 }
 
 function Find-SusFiles {
-    # Function implementation unchanged...
-    Write-Output "Finding suspicious files names..."
+    Write-Output "Finding suspicious file names..."
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
     $susFilesHeader = "`n-----------------`nSus Files:`n"
@@ -180,7 +175,6 @@ function Log-PrefetchFiles {
 }
 
 function List-BAMStateUserSettings {
-    # Function implementation unchanged...
     Write-Host "Logging reg entries inside PowerShell..." -ForegroundColor DarkMagenta
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
@@ -207,7 +201,6 @@ function List-BAMStateUserSettings {
 }
 
 function Log-BrowserFolders {
-    # Function implementation unchanged...
     Write-Host "Logging Browser Folders..." -ForegroundColor DarkMagenta
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
@@ -228,7 +221,6 @@ function Log-BrowserFolders {
 }
 
 function Log-WindowsInstallDate {
-    # Function implementation unchanged...
     Write-Output "Logging Windows Install Date..."
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
@@ -244,13 +236,44 @@ function Log-WindowsInstallDate {
     }
 }
 
+function Check-KMBoxesAndDMA {
+    Write-Output "Checking for Kernel-mode boxes and DMA devices..."
+    $desktopPath = [System.Environment]::GetFolderPath('Desktop')
+    $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
+    $kmHeader = "`n-----------------`nKernel-mode Boxes and DMA Devices:`n"
+    
+    Add-Content -Path $outputFile -Value $kmHeader
+    
+    # Example of checking for known KM boxes or DMA devices
+    $knownKMs = @("KMBox1", "KMBox2") # Add known KM box names here
+    $knownDMAs = @("DMABox1", "DMABox2") # Add known DMA device names here
+    
+    foreach ($km in $knownKMs) {
+        if (Test-Path "C:\Path\To\$km") { # Adjust path accordingly
+            Add-Content -Path $outputFile -Value "$km found."
+        }
+    }
+    
+    foreach ($dma in $knownDMAs) {
+        if (Test-Path "C:\Path\To\$dma") { # Adjust path accordingly
+            Add-Content -Path $outputFile -Value "$dma found."
+        }
+    }
+    
+    # Optionally, log if none found
+    if (-not (Get-Content -Path $outputFile | Select-String -Pattern "found")) {
+        Add-Content -Path $outputFile -Value "No known Kernel-mode boxes or DMA devices found."
+    }
+}
+
 # Main execution block
 List-BAMStateUserSettings
 Log-WindowsInstallDate
 Find-RarAndExeFiles
 Find-SusFiles
-Log-PrefetchFiles  # Call the new function to log prefetch files
-Log-BrowserFolders  # Call the function to log browser folders
+Log-PrefetchFiles
+Log-BrowserFolders
+Check-KMBoxesAndDMA  # Call the function to check for KM boxes and DMA
 
 $desktopPath = [System.Environment]::GetFolderPath('Desktop')
 # Copy the log file to clipboard
@@ -267,22 +290,17 @@ if (Test-Path $logFilePath) {
 # Function and code to delete existing files unchanged...
 
 # Print completion message
-# Code for completion message unchanged...
- Log-BrowserFolders
-    # Remove the placeholder Log-MUICacheEntries function call if not defined elsewhere
-  
-    $folderNames = Log-FolderNames | Sort-Object | Get-Unique
+$folderNames = Log-FolderNames | Sort-Object | Get-Unique
 
-    foreach ($name in $folderNames) {
-        $url = "https://stats.cc/siege/$name"
-        Write-Host "Opening stats for $name on Stats.cc ..." -ForegroundColor Cyan
-        Start-Process $url
-        Start-Sleep -Seconds 0.5
-    }
+foreach ($name in $folderNames) {
+    $url = "https://stats.cc/siege/$name"
+    Write-Host "Opening stats for $name on Stats.cc ..." -ForegroundColor Cyan
+    Start-Process $url
+    Start-Sleep -Seconds 0.5
+}
 
 # Define colors
 $yellow = "Yellow"
-$yellow = "yellow"
 $space = " " * 12  # Increased the number of spaces for more right alignment
 
 # Print the red "SCAN COMPLETE" line with more white space to the right
