@@ -166,7 +166,11 @@ function Log-PrefetchFiles {
         $prefetchFiles = Get-ChildItem -Path $prefetchPath -Filter "*.pf"
         if ($prefetchFiles.Count -gt 0) {
             Add-Content -Path $outputFile -Value $prefetchFilesHeader
-            $prefetchFiles | ForEach-Object { Add-Content -Path $outputFile -Value $_.FullName }
+            foreach ($file in $prefetchFiles) {
+                $fileInfo = Get-Item -Path $file.FullName
+                $timestamp = $fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")  # Get last write time
+                Add-Content -Path $outputFile -Value "$($file.FullName) - Last Modified: $timestamp"
+            }
         } else {
             Add-Content -Path $outputFile -Value "`nNo prefetch files found."
         }
