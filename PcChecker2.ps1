@@ -4,10 +4,12 @@ $host.UI.RawUI.WindowTitle = "Created By: Zeyfr on Discord"
 $titleText = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedTitle))
 
 $darkRed = [System.ConsoleColor]::DarkRed
+$magenta = [System.ConsoleColor]::Magenta
 $white = [System.ConsoleColor]::White
 
 $art = @"
                   
+
 |       /  |   ____\   \  /   /
 `---/  /   |  |__   \   \/   / 
    /  /    |   __|   \_    _/  
@@ -19,7 +21,7 @@ foreach ($char in $art.ToCharArray()) {
     if ($char -match '[▒░▓]') {
         Write-Host $char -ForegroundColor $darkRed -NoNewline
     } else {
-        Write-Host $char -ForegroundColor $white -NoNewline
+        Write-Host $char -ForegroundColor $magenta -NoNewline  # Use magenta for ASCII art
     }
 }
 
@@ -179,7 +181,7 @@ function List-BAMStateUserSettings {
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $outputFile = Join-Path -Path $desktopPath -ChildPath "PcCheckLogs.txt"
     if (Test-Path $outputFile) { Clear-Content $outputFile }
-    $loggedPaths = @{}
+    $loggedPaths = @{ }
     Write-Host " Fetching UserSettings Entries " -ForegroundColor DarkMagenta
     $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Services\bam\State\UserSettings"
     $userSettings = Get-ChildItem -Path $registryPath | Where-Object { $_.Name -like "*1001" }
